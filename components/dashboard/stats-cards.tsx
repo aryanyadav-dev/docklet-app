@@ -89,10 +89,15 @@ export function StatsCards() {
       // Calculate average build time
       if (builds.length > 0) {
         const buildTimes = builds
-          .filter(build => build.duration)
+          .filter(build => build.duration && typeof build.duration === 'string' && build.duration.includes('m '))
           .map(build => {
-            const [minutes, seconds] = build.duration.split('m ')
-            return parseInt(minutes) * 60 + parseInt(seconds.replace('s', ''))
+            try {
+              const [minutes, seconds] = build.duration.split('m ');
+              return parseInt(minutes) * 60 + parseInt(seconds.replace('s', ''));
+            } catch (error) {
+              console.error("Error parsing build duration:", build.duration);
+              return 0; // Return 0 seconds for invalid durations
+            }
           })
         
         if (buildTimes.length > 0) {

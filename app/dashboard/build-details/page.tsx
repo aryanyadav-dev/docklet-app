@@ -87,9 +87,7 @@ export default function BuildDetailsPage() {
       setIsDownloading(false)
       
       let description = "";
-      if (projectType === "flutter" || projectType === "reactnative") {
-        description = "app-release.apk and app-release.ipa have been downloaded successfully.";
-      } else if (projectType === "ios") {
+      if (platform === "ios") {
         description = "app-release-signed.ipa has been downloaded successfully.";
       } else { // android
         description = "app-release-signed.apk has been downloaded successfully.";
@@ -232,9 +230,7 @@ export default function BuildDetailsPage() {
                 ) : (
                   <>
                     <Download className="h-4 w-4" />
-                    {projectType === "flutter" || projectType === "reactnative" 
-                      ? "Download App" 
-                      : `Download ${projectType === "ios" ? "IPA" : "APK"}`}
+                    {platform === "ios" ? "Download IPA" : "Download APK"}
                   </>
                 )}
               </Button>
