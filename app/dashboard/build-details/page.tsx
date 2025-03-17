@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
@@ -32,6 +32,31 @@ export default function BuildDetailsPage() {
   const [activeTab, setActiveTab] = useState("logs")
   const [buildKey, setBuildKey] = useState(Date.now()) // Used to force re-render of test component
   const [platform, setPlatform] = useState("ios") // Default to iOS for this example
+  const [projectType, setProjectType] = useState("ios") // Can be "ios", "android", "flutter", or "reactnative"
+
+  // Initialize project type based on project data
+  useEffect(() => {
+    // In a real app, this would come from the project data
+    // For this example, we'll simulate getting the project type
+    
+    // Simulating getting project data
+    const projectPlatform = "flutter"; // This could be "ios", "android", "flutter", or "reactnative"
+    
+    setProjectType(projectPlatform);
+    
+    // Set default device based on project type
+    if (projectPlatform === "ios") {
+      setPlatform("ios");
+      setSelectedDevice("iphone15");
+    } else if (projectPlatform === "android") {
+      setPlatform("android");
+      setSelectedDevice("pixel7");
+    } else {
+      // For cross-platform projects, default to iOS
+      setPlatform("ios");
+      setSelectedDevice("iphone15");
+    }
+  }, []);
 
   const handleRebuild = () => {
     setIsRebuilding(true)
@@ -61,11 +86,18 @@ export default function BuildDetailsPage() {
     setTimeout(() => {
       setIsDownloading(false)
       
+      let description = "";
+      if (projectType === "flutter" || projectType === "reactnative") {
+        description = "app-release.apk and app-release.ipa have been downloaded successfully.";
+      } else if (projectType === "ios") {
+        description = "app-release-signed.ipa has been downloaded successfully.";
+      } else { // android
+        description = "app-release-signed.apk has been downloaded successfully.";
+      }
+      
       toast({
         title: "Download complete",
-        description: platform === "ios" 
-          ? "app-release-signed.ipa has been downloaded successfully."
-          : "app-release-signed.apk has been downloaded successfully.",
+        description: description
       })
     }, 2000)
   }
@@ -80,7 +112,7 @@ export default function BuildDetailsPage() {
       
       let deviceName = "";
       
-      if (platform === "ios") {
+      if (selectedDevice.includes("iphone")) {
         deviceName = selectedDevice === "iphone14" ? "iPhone 14" : 
                     selectedDevice === "iphone15" ? "iPhone 15" : 
                     selectedDevice === "iphone15pro" ? "iPhone 15 Pro" : "iPhone 15 Pro Max";
@@ -89,9 +121,16 @@ export default function BuildDetailsPage() {
                     selectedDevice === "pixel7" ? "Pixel 7" : "Pixel 8";
       }
       
+      let frameworkInfo = "";
+      if (projectType === "flutter") {
+        frameworkInfo = " using Flutter";
+      } else if (projectType === "reactnative") {
+        frameworkInfo = " using React Native";
+      }
+      
       toast({
         title: "App launched",
-        description: `Shopping App is now running on ${deviceName}.`,
+        description: `Shopping App is now running on ${deviceName}${frameworkInfo}.`,
       })
     }, 3000)
   }
@@ -100,33 +139,47 @@ export default function BuildDetailsPage() {
     setActiveTab(value)
   }
 
-  // Get device options based on platform
+  // Get device options based on platform/project type
   const getDeviceOptions = () => {
-    if (platform === "ios") {
-      return [
-        { id: "iphone14", name: "iPhone 14", os: "iOS 17" },
-        { id: "iphone15", name: "iPhone 15", os: "iOS 17" },
-        { id: "iphone15pro", name: "iPhone 15 Pro", os: "iOS 17" },
-        { id: "iphone15promax", name: "iPhone 15 Pro Max", os: "iOS 17" }
-      ];
+    // iOS devices
+    const iosDevices = [
+      { id: "iphone14", name: "iPhone 14", os: "iOS 17" },
+      { id: "iphone15", name: "iPhone 15", os: "iOS 17" },
+      { id: "iphone15pro", name: "iPhone 15 Pro", os: "iOS 17" },
+      { id: "iphone15promax", name: "iPhone 15 Pro Max", os: "iOS 17" }
+    ];
+    
+    // Android devices
+    const androidDevices = [
+      { id: "pixel6", name: "Pixel 6", os: "Android 13" },
+      { id: "pixel7", name: "Pixel 7", os: "Android 13" },
+      { id: "pixel8", name: "Pixel 8", os: "Android 14" }
+    ];
+    
+    if (projectType === "ios" || (projectType === "flutter" && platform === "ios") || (projectType === "reactnative" && platform === "ios")) {
+      return iosDevices;
     } else {
-      return [
-        { id: "pixel6", name: "Pixel 6", os: "Android 13" },
-        { id: "pixel7", name: "Pixel 7", os: "Android 13" },
-        { id: "pixel8", name: "Pixel 8", os: "Android 14" }
-      ];
+      return androidDevices;
     }
   };
 
   // Get command based on platform and selected device
   const getRunCommand = () => {
-    const deviceName = platform === "ios" 
+    const deviceName = selectedDevice.includes("iphone") 
       ? selectedDevice.replace("iphone", "iPhone ").replace("pro", "Pro").replace("max", "Max") 
       : selectedDevice.replace("pixel", "Pixel ");
     
-    return platform === "ios" 
-      ? `xcodebuild -destination "platform=iOS Simulator,name=${deviceName}" run` 
-      : `adb -s ${deviceName} install -r app-release.apk`;
+    if (projectType === "flutter") {
+      return `flutter run -d ${deviceName}`;
+    } else if (projectType === "reactnative") {
+      return selectedDevice.includes("iphone")
+        ? `npx react-native run-ios --simulator="${deviceName}"` 
+        : `npx react-native run-android --deviceId=${deviceName}`;
+    } else if (projectType === "ios") {
+      return `xcodebuild -destination "platform=iOS Simulator,name=${deviceName}" run`;
+    } else { // android
+      return `adb -s ${deviceName} install -r app-release.apk`;
+    }
   };
 
   return (
@@ -179,7 +232,9 @@ export default function BuildDetailsPage() {
                 ) : (
                   <>
                     <Download className="h-4 w-4" />
-                    Download {platform === "ios" ? "IPA" : "APK"}
+                    {projectType === "flutter" || projectType === "reactnative" 
+                      ? "Download App" 
+                      : `Download ${projectType === "ios" ? "IPA" : "APK"}`}
                   </>
                 )}
               </Button>

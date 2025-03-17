@@ -59,7 +59,9 @@ export function DashboardHeader() {
       <div className="container mx-auto flex h-16 items-center px-4 md:px-6">
         <div className="flex items-center gap-2 font-semibold">
           <CuboidIcon className="h-6 w-6 text-indigo-600" />
-          <span className="hidden md:inline-block">Docklet</span>
+          <Link href="/dashboard" className="hidden md:inline-block hover:text-indigo-600 transition-colors">
+            Docklet
+          </Link>
         </div>
 
         <nav className="hidden md:flex items-center space-x-4 lg:space-x-6 mx-6">
@@ -171,7 +173,9 @@ export function DashboardHeader() {
             <SheetContent side="left">
               <div className="flex items-center gap-2 font-semibold mb-8">
                 <CuboidIcon className="h-6 w-6 text-indigo-600" />
-                <span>Docklet</span>
+                <Link href="/dashboard" className="hover:text-indigo-600 transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+                  Docklet
+                </Link>
               </div>
               <nav className="flex flex-col gap-4">
                 <Link

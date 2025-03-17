@@ -73,10 +73,70 @@ export function ProjectList({ projects }) {
   }
 
   const startBuild = () => {
+    // Generate a random build status (80% success, 20% failed)
+    const buildStatus = Math.random() < 0.8 ? "success" : "failed"
+    
+    // Generate a random build duration between 2-10 minutes
+    const minutes = Math.floor(Math.random() * 8) + 2
+    const seconds = Math.floor(Math.random() * 60)
+    const duration = `${minutes}m ${seconds}s`
+    
+    // Generate a unique build ID
+    const buildId = `B-${Math.floor(Math.random() * 10000)}`
+    
+    // Create a new build object
+    const newBuild = {
+      id: buildId,
+      project: selectedProject.name,
+      branch: "main",
+      commit: Math.random().toString(36).substring(2, 8),
+      status: buildStatus,
+      duration: duration,
+      timestamp: new Date().toLocaleString(),
+      triggeredBy: "Current User",
+    }
+    
+    // Get existing builds from localStorage
+    const savedBuilds = localStorage.getItem("builds")
+    let builds = []
+    
+    if (savedBuilds) {
+      builds = JSON.parse(savedBuilds)
+    }
+    
+    // Add the new build to the beginning of the array
+    builds.unshift(newBuild)
+    
+    // Save updated builds to localStorage
+    localStorage.setItem("builds", JSON.stringify(builds))
+    
+    // Update the project's last build info
+    const savedProjects = localStorage.getItem("projects")
+    if (savedProjects) {
+      const projectsArray = JSON.parse(savedProjects)
+      const updatedProjects = projectsArray.map(p => {
+        if (p.id === selectedProject.id) {
+          return {
+            ...p,
+            lastBuild: "Just now",
+            status: buildStatus
+          }
+        }
+        return p
+      })
+      
+      // Save updated projects to localStorage
+      localStorage.setItem("projects", JSON.stringify(updatedProjects))
+    }
+    
+    // Dispatch a custom event to notify other components
+    window.dispatchEvent(new Event("buildsUpdated"))
+    
     toast({
       title: "Build started",
       description: `Build for ${selectedProject.name} has been started.`,
     })
+    
     setRunBuildDialogOpen(false)
 
     // Navigate to build details page
